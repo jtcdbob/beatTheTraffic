@@ -12,7 +12,6 @@ HOME = "1793 Battersea Ct., San Jose, CA"
 WORK = "285 Hamilton Ave, Palo Alto, CA"
 MODE = 'driving'
 MIN_TO_SEC = 60
-
 TITLE = 'Light Traffic'
 
 # The notifier function
@@ -22,25 +21,34 @@ def notify(title, subtitle, message):
     m = '-message {!r}'.format(message)
     os.system('terminal-notifier {}'.format(' '.join([m, t, s])))
 
+# Get current travel time
 def getTime(now, isHome):
     if isHome:
-        directions_result = gmaps.directions(HOME, WORK, MODE, departure_time=now)
+        start = HOME;
+        end = WORK;
     else:
-        directions_result = gmaps.directions(WORK, HOME, MODE, departure_time=now)
+        start = WORK;
+        end = HOME;
+    directions_result = gmaps.directions(start, end, MODE, departure_time=now)
     time = directions_result[0]['legs'][0]['duration_in_traffic']['value']
-    # DEBUG
-    # testtime = directions_result[0]
-    # pprint.PrettyPrinter(depth=6).pprint(testtime)
     return time
+
+# Log the data
+def logTime(msg):
+    print os.path.dirname(os.path.abspath(__file__))
+    with open('/Users/bob/Desktop/test.txt', 'a') as file:
+        file.write(msg);
+        print('Logging done');
 
 def main():
     pp = pprint.PrettyPrinter(depth=6)
     time_print_format = '{:%Y-%m-%d %H:%M:%S}';
-    limit_in_min = 40
+    limit_in_min = 36
     start_home_time = 7
     end_home_time = 11
     start_work_time = 16
     end_work_time = 20
+
 
     while True:
         try:
@@ -64,6 +72,7 @@ def main():
                 notify(TITLE, subtitle, msg)
                 wait_time = 10
             pp.pprint('{0}: The driving time to {1} is {2} minutes. Check again in {3} minutes.'.format(str(current_time), 'work' if isHome else 'home', str(driving_time / MIN_TO_SEC), wait_time))
+            logTime('{0}: The driving time to {1} is {2} minutes. Check again in {3} minutes.'.format(str(current_time), 'work' if isHome else 'home', str(driving_time / MIN_TO_SEC), wait_time))
             time.sleep(wait_time * MIN_TO_SEC) # Check in 2 minutes
         except KeyboardInterrupt:
             sys.exit()
